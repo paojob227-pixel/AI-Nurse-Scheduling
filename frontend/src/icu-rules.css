@@ -1,0 +1,64 @@
+.section-heading {
+  display: flex;
+  justify-content: space-between;
+  gap: 18px;
+  align-items: start;
+}
+
+.section-heading h2,
+.panel h2 {
+  margin: 0;
+  font-size: 1.15rem;
+}
+
+.section-heading p {
+  margin: 5px 0 0;
+}
+
+.department-select {
+  width: min(280px, 100%);
+}
+
+.rules-table td small {
+  display: block;
+  margin-top: 3px;
+  color: #64748b;
+  font-family: ui-monospace, monospace;
+}
+
+.rule-value {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.rule-value input {
+  min-width: 88px;
+}
+
+.rule-value span {
+  white-space: nowrap;
+  color: #64748b;
+}
+
+.rule-actions {
+  white-space: nowrap;
+}
+
+.rule-actions button + button {
+  margin-left: 6px;
+}
+
+@media (max-width: 780px) {
+  .section-heading {
+    display: grid;
+  }
+
+  .department-select {
+    width: 100%;
+  }
+
+  .rules-table {
+    min-width: 680px;
+  }
+}

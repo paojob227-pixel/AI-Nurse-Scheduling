@@ -1,0 +1,15 @@
+.preference-filter label { width: min(420px, 100%); }
+.preference-grid { display: grid; gap: 18px; }
+.preference-grid h2 { margin: 0 0 14px; font-size: 1.15rem; }
+.preference-grid .form-grid { margin-bottom: 14px; }
+.preference-guide { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; margin: 20px 0; }
+.preference-guide article { display: flex; gap: 12px; padding: 15px; border: 1px solid #dce7f6; border-radius: 12px; background: #fff; }
+.preference-guide strong { color: #1c355d; font-size: .9rem; }
+.preference-guide p, .field-help, .section-description { margin: 4px 0 0; color: #64748b; font-size: .82rem; line-height: 1.55; }
+.guide-badge, .section-tag, .blocked-label { display: inline-flex; align-items: center; height: fit-content; padding: 4px 7px; border-radius: 999px; font-size: .68rem; font-weight: 800; white-space: nowrap; }
+.soft { color: #365e97; background: #e7f1ff; }
+.hard { color: #ad3e27; background: #fff0eb; }
+.section-tag { margin-left: 6px; vertical-align: middle; }
+.blocked-label { color: #ad3e27; background: #fff0eb; }
+.unavailable-panel { border-color: #f3ddd7; }
+@media (max-width: 720px) { .preference-guide { grid-template-columns: 1fr; } }
