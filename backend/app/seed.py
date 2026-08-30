@@ -16,8 +16,13 @@ def seed() -> None:
         raise RuntimeError("Set ADMIN_INITIAL_PASSWORD before running the seed command")
     db = SessionLocal()
     try:
-        if db.scalar(select(User).where(User.username == "admin")) is None:
+        admin = db.scalar(select(User).where(User.username == "admin"))
+        if admin is None:
             db.add(User(username="admin", password_hash=hash_password(password), role="admin"))
+        else:
+            # Keep the deployment credential and the stored account in sync. This
+            # also repairs a database created by an earlier failed deployment.
+            admin.password_hash = hash_password(password)
         department = db.scalar(select(Department).where(Department.code == "ICU"))
         if department is None:
             department = Department(name="Intensive Care Unit", code="ICU")
