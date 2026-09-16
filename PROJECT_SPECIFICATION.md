@@ -2,13 +2,13 @@
 
 ## Current delivery scope
 
-The application supports monthly ICU scheduling through both a manual editor and an AI-assisted workflow powered by Google OR-Tools CP-SAT. Users can authenticate, maintain staff and reference data, submit or approve leave, record availability and shift preferences, create and validate schedules, generate AI previews, review auditable AI drafts, and publish an approved manual schedule.
+The application supports monthly ICU scheduling through both a manual editor and an AI-assisted workflow powered by Google OR-Tools CP-SAT. Users can authenticate, maintain staff and reference data, submit or approve leave, record shift preferences (including all-day unavailability with an avoid preference at priority 5), create and validate schedules, generate AI previews, review auditable AI drafts, and publish an approved manual schedule.
 
 ## Roles
 
 - `admin`: system settings, reference data, staff, ICU rules, validation, and schedule operations.
 - `head_nurse`: schedule operations plus final AI-draft approval, rejection, and conversion into a manual draft.
-- `nurse` / `nurse_assistant`: view schedules and personal shifts, submit leave, and maintain personal availability and preferences.
+- `nurse` / `nurse_assistant`: view schedules and personal shifts, submit leave, and maintain personal preferences.
 
 ## AI safety boundary
 
@@ -17,7 +17,7 @@ AI generation is decision support, not an automatic publishing mechanism. An AI 
 ## Main modules
 
 - JWT authentication and role-based authorization
-- Staff, department, shift, holiday, leave, availability, and preference data
+- Staff, department, shift, leave, and preference data
 - Department-specific ICU rule configuration and real-time coverage windows
 - Manual monthly scheduling, assignment locking, conflict validation, and publish history
 - CP-SAT generation with hard constraints and fairness, preference, and OT objectives

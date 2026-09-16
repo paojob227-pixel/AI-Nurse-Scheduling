@@ -195,7 +195,11 @@ def validate_context(
 
     assignment_keys = {(item.staff_id, item.work_date, item.shift_id) for item in assignments}
     for preference in preferences:
-        matching = [item for item in assignments if item.staff_id == preference.staff_id and item.work_date == preference.work_date and (preference.shift_id is None or item.shift_id == preference.shift_id)]
+        is_unavailable = preference.preference == "avoid" and preference.weight == 5
+        matching = [item for item in assignments if item.staff_id == preference.staff_id and item.work_date == preference.work_date and (is_unavailable or preference.shift_id is None or item.shift_id == preference.shift_id)]
+        if is_unavailable and matching:
+            conflicts.append(_conflict("error", "UNAVAILABLE_PREFERENCE", preference.work_date, matching[0].shift_code, matching, "A priority-5 avoid preference means the staff member is unavailable for every shift that day"))
+            continue
         if preference.preference == "avoid" and matching:
             conflicts.append(_conflict("warning", "SOFT_PREFERENCE_AVOID", preference.work_date, matching[0].shift_code, matching, f"A soft avoid preference (weight {preference.weight}) was not met"))
         if preference.preference == "prefer" and (preference.staff_id, preference.work_date, preference.shift_id) not in assignment_keys:

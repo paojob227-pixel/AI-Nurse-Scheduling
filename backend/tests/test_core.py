@@ -466,6 +466,31 @@ class CoreTests(unittest.TestCase):
             for constraint in assignment_model.model.Proto().constraints
         ))
 
+    def test_priority_five_avoid_blocks_every_shift_for_the_day(self) -> None:
+        staff = (SchedulerStaff(10, "RN001", "RN One", "RN", True),)
+        shifts = (
+            SchedulerShift(1, "AM", time(7), time(15), 480, False),
+            SchedulerShift(2, "PM", time(15), time(23), 480, False),
+        )
+        preferences = (SchedulerPreference(10, date(2026, 2, 10), None, "avoid", 5),)
+        snapshot = SchedulerSnapshot(1, 2026, 2, staff, shifts, (), {"REST_AFTER_NIGHT": 8}, (), (), preferences, (), ())
+
+        assignment_model = AssignmentModelBuilder().build(snapshot)
+
+        self.assertEqual(assignment_model.preferences.hard_constraint_count, 2)
+        self.assertEqual(assignment_model.preferences.score_term_count, 0)
+        for shift_id in (1, 2):
+            constrained_model = AssignmentModelBuilder().build(snapshot)
+            constrained_model.model.Add(constrained_model.assignments[(10, date(2026, 2, 10), shift_id)] == 1)
+            self.assertEqual(cp_model.CpSolver().Solve(constrained_model.model), cp_model.INFEASIBLE)
+
+    def test_manual_validator_blocks_priority_five_avoid_preference(self) -> None:
+        assignment = Assignment(1, 10, "RN One", "RN", True, date(2026, 8, 1), 1, "AM", time(7), time(15), False, True, False, None, None)
+        conflicts = validate_context(
+            [assignment], [], {}, [], [SoftPreference(10, date(2026, 8, 1), None, "avoid", 5)], 2026, 8,
+        )
+        self.assertIn("UNAVAILABLE_PREFERENCE", {item.code for item in conflicts})
+
     def test_preference_prevalidation_reports_outside_and_conflicting_input(self) -> None:
         staff = (SchedulerStaff(10, "RN001", "RN One", "RN", True),)
         shifts = (SchedulerShift(1, "AM", time(7), time(15), 480, False),)

@@ -31,9 +31,9 @@ For a manual schedule assignment, send `staff_id`, `shift_type_id`, `work_date`,
 
 ICU rule keys are `MIN_RN`, `MAX_RN`, `MIN_SUPPORT`, `REST_AFTER_NIGHT`, `MONTHLY_HOURS`, and `OT_THRESHOLD`. Their payload uses `{ "key": "MIN_RN", "value": 3 }` when creating and `{ "value": 3 }` when updating.
 
-Staff shift preferences use `preference` value `prefer` or `avoid` and a soft-constraint `weight` from 1 through 5. An unavailable date is stored through `/availability` with `status` set to `unavailable`.
+Staff shift preferences use `preference` value `prefer` or `avoid`. Weights `1` through `4` are soft constraints for the selected shift. An `avoid` request with weight `5` represents an all-day unavailable date: `shift_type_id` is stored as `null` and the scheduler must not assign any working shift on that date. Weight `5` is reserved for this all-day unavailable request.
 
-Availability accepts an optional `shift_type_id`. In the Pilot spreadsheet, `availability.shift_code` may be `AM`, `PM`, `N`, `D`, `DE`, or `ALL`. `ALL` is stored with a null `shift_type_id` and blocks every working shift for that staff member on that date; a named shift blocks only that shift.
+`/availability` remains available only for legacy Pilot imports and existing data. It is no longer exposed as a separate user workflow; new all-day unavailable requests must use `POST /staff-preferences` with `preference: "avoid"` and `weight: 5`.
 
 `GET /schedules/{id}/conflicts` validates the saved manual schedule against ICU v1.1 rules and returns read-only errors and warnings. It does not generate or alter a schedule.
 

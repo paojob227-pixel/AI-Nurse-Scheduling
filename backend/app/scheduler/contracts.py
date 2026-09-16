@@ -59,7 +59,7 @@ class SchedulerAvailability:
 class SchedulerPreference:
     staff_id: int
     work_date: date
-    shift_type_id: int
+    shift_type_id: int | None
     preference: Literal["prefer", "avoid"]
     weight: int
 

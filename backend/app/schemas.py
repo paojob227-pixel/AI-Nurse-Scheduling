@@ -110,7 +110,7 @@ class AvailabilityOut(AvailabilityCreate, ORMModel):
 class StaffPreferenceCreate(BaseModel):
     staff_id: int | None = None
     work_date: date
-    shift_type_id: int
+    shift_type_id: int | None = None
     preference: Literal["prefer", "avoid"]
     weight: int = Field(default=1, ge=1, le=5)
     reason: str | None = Field(default=None, max_length=500)
@@ -118,7 +118,7 @@ class StaffPreferenceCreate(BaseModel):
 
 class StaffPreferenceUpdate(BaseModel):
     work_date: date
-    shift_type_id: int
+    shift_type_id: int | None = None
     preference: Literal["prefer", "avoid"]
     weight: int = Field(default=1, ge=1, le=5)
     reason: str | None = Field(default=None, max_length=500)
@@ -128,7 +128,7 @@ class StaffPreferenceOut(ORMModel):
     id: int
     staff_id: int
     work_date: date
-    shift_type_id: int
+    shift_type_id: int | None
     preference: Literal["prefer", "avoid"]
     weight: int
     reason: str | None

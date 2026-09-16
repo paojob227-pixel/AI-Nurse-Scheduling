@@ -360,7 +360,7 @@ def create_staff_preference(payload: StaffPreferenceCreate, db: Session = Depend
         raise HTTPException(status_code=422, detail=str(error))
     except IntegrityError as error:
         db.rollback()
-        raise HTTPException(status_code=409, detail="This identical preference already exists") from error
+        raise HTTPException(status_code=409, detail="วันนี้มีรายการความต้องการนี้อยู่แล้ว") from error
 
 
 @router.put("/staff-preferences/{preference_id}", response_model=StaffPreferenceOut)
@@ -375,7 +375,7 @@ def update_staff_preference(preference_id: int, payload: StaffPreferenceUpdate, 
         raise HTTPException(status_code=422, detail=str(error))
     except IntegrityError as error:
         db.rollback()
-        raise HTTPException(status_code=409, detail="This identical preference already exists") from error
+        raise HTTPException(status_code=409, detail="วันนี้มีรายการความต้องการนี้อยู่แล้ว") from error
 
 
 @router.delete("/staff-preferences/{preference_id}", status_code=204)

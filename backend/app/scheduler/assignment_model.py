@@ -90,7 +90,7 @@ class AssignmentModelBuilder:
         )
         _add_d_de_continuation_constraints(model, assignments, snapshot)
         fairness = build_fairness_objective_model(model, assignments, snapshot)
-        preferences = build_preference_objective_model(model, assignments, snapshot)
+        preferences = build_preference_objective_model(model, assignments, snapshot, valid_locks)
         overtime = build_ot_objective_model(model, fairness, snapshot)
         objective = build_objective_composition(model, fairness, preferences, overtime)
 

@@ -30,9 +30,9 @@ The read-only foundation and AI Hard Constraint Core are now implemented:
 
 ### Phase 2.3.2A Preference Objective Variables
 
-- Each dated `staff_shift_preferences` entry creates a Boolean soft-penalty variable only when its staff/date/shift belongs to the snapshot.
-- `prefer` has a penalty when its shift is not assigned; `avoid` has a penalty when its shift is assigned. Weights 1–5 form `preference_penalty_score`.
-- These relations do not fix or prohibit any assignment `x`; preference remains a soft objective, never a hard safety rule.
+- Each dated `staff_shift_preferences` entry with weight 1–4 creates a Boolean soft-penalty variable only when its staff/date/shift belongs to the snapshot.
+- `prefer` has a penalty when its shift is not assigned; `avoid` has a penalty when its shift is assigned. Weights 1–4 form `preference_penalty_score`.
+- An `avoid` request with weight 5 is an all-day unavailable request, not a soft score: it adds `x[staff,date,shift] == 0` for every working shift on that date.
 - Invalid, outside-snapshot, unsupported-weight/type, and contradictory prefer/avoid inputs are reported in diagnostics and omitted from score terms.
 - The preference score is prepared only. It is not passed to `Minimize`.
 
@@ -136,8 +136,8 @@ Each generation run is scoped to `{department_id, year, month}` and creates an i
 | Coverage | `coverage_windows`, `coverage_window_shift_types` | Which shifts cover each real-time window and staffing minima/maxima |
 | Department rules | `department_rule_settings` | MIN_RN, MAX_RN, MIN_SUPPORT, REST_AFTER_NIGHT, MONTHLY_HOURS, OT_THRESHOLD |
 | Leave | approved `leave_requests` | Prohibited work dates |
-| Availability | `availability` | `unavailable` and `preferred_off` become soft penalties |
-| Preferences | `staff_shift_preferences` | `prefer` / `avoid` with weight 1–5 become soft penalties |
+| Availability | legacy `availability` data only | Existing imported unavailable entries remain hard blocks |
+| Preferences | `staff_shift_preferences` | `prefer` / `avoid` at weight 1–4 are soft; `avoid` at weight 5 blocks every shift that day |
 | Existing schedule | `schedules`, `schedule_details` | Locked assignments are fixed; prior published data may provide fairness baseline later |
 | Incharge/exception data | `schedule_details` | Preserve locked/manual choices; generated normal Incharge must be Senior RN |
 
