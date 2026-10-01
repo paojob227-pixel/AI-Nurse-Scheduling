@@ -6,6 +6,7 @@ import SchedulePublishWorkflow from "./components/SchedulePublishWorkflow";
 import SeniorRnManager from "./components/SeniorRnManager";
 import MyPreferencePage from "./components/MyPreferencePage";
 import AiDraftPreview from "./components/AiDraftPreview";
+import PageGuide from "./components/PageGuide";
 
 type Page = "dashboard" | "staff" | "schedule" | "leave" | "preferences" | "settings";
 type Department = { id: number; name: string; code: string };
@@ -30,7 +31,7 @@ function LoginPage({ onSuccess }: { onSuccess: () => void }) {
     event.preventDefault(); setError("");
     try { await login(username, password); onSuccess(); } catch (e) { setError(messageFrom(e)); }
   }
-  return <main className="login-shell"><form className="login-card" onSubmit={submit}><p className="eyebrow">AI NURSE SCHEDULING</p><h1>เข้าสู่ระบบ</h1><p>ระบบจัดตารางเวร ICU</p><label>ชื่อผู้ใช้<input value={username} onChange={e => setUsername(e.target.value)} placeholder="กรอกชื่อผู้ใช้" autoComplete="username" required /></label><label>รหัสผ่าน<input type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="กรอกรหัสผ่าน" autoComplete="current-password" minLength={4} required /></label>{error && <p className="error">{error}</p>}<button>เข้าสู่ระบบ</button></form></main>;
+  return <main className="login-shell"><form className="login-card" onSubmit={submit}><p className="eyebrow">AI NURSE SCHEDULING</p><h1>เข้าสู่ระบบ</h1><p>ระบบจัดตารางเวร ICU</p><PageGuide compact purpose="ใช้ยืนยันตัวตนก่อนเข้าสู่ข้อมูลตารางเวรและเมนูที่ได้รับอนุญาต" steps={["กรอกชื่อผู้ใช้และรหัสผ่านที่ได้รับ", "กด “เข้าสู่ระบบ” เพื่อเปิดหน้าหลัก"]} note="หากเข้าสู่ระบบไม่ได้ ให้ตรวจสอบตัวพิมพ์เล็ก-ใหญ่ หรือติดต่อผู้ดูแลระบบ" /><label>ชื่อผู้ใช้<input value={username} onChange={e => setUsername(e.target.value)} placeholder="กรอกชื่อผู้ใช้" autoComplete="username" required /></label><label>รหัสผ่าน<input type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="กรอกรหัสผ่าน" autoComplete="current-password" minLength={4} required /></label>{error && <p className="error">{error}</p>}<button>เข้าสู่ระบบ</button></form></main>;
 }
 
 function Dashboard() {
@@ -77,4 +78,35 @@ function LeavePage({ manager }: { manager: boolean }) {
 
 function SettingsPage({ user }: { user: User }) { const [items, setItems] = useState<Setting[]>([]); const [error, setError] = useState(""); const load = useCallback(() => api<Setting[]>("/settings").then(setItems).catch(e => setError(messageFrom(e))), []); const manager = isManager(user); useEffect(() => { if (user.role === "admin") load(); }, [load, user.role]); if (!manager) return <><h1>ตั้งค่า</h1><p>เฉพาะ Admin และ Head Nurse เท่านั้นที่เข้าถึง ICU Rules ได้</p></>; return <><h1>ตั้งค่า</h1><IcuRulesPanel />{user.role === "admin" && <section className="panel"><h2>System Settings</h2>{error && <p className="error">{error}</p>}<table><thead><tr><th>คีย์</th><th>ค่า</th><th /></tr></thead><tbody>{items.map(i => <tr key={i.id}><td>{i.key}</td><td><input id={`setting-${i.id}`} defaultValue={i.value} /></td><td><button className="small" onClick={async () => { const value = (document.getElementById(`setting-${i.id}`) as HTMLInputElement).value; try { await api(`/settings/${i.key}`, { method: "PUT", body: JSON.stringify({ key: i.key, value }) }); load(); } catch (e) { setError(messageFrom(e)); } }}>บันทึก</button></td></tr>)}</tbody></table></section>}</>; }
 
-export default function App() { const [user, setUser] = useState<User | null>(null); const [page, setPage] = useState<Page>("dashboard"); const loadUser = useCallback(() => { if (!getToken()) return; api<User>("/auth/me").then(setUser).catch(() => { clearTokens(); setUser(null); }); }, []); useEffect(() => { loadUser(); }, [loadUser]); if (!user) return <LoginPage onSuccess={loadUser} />; const manager = isManager(user); const content = page === "dashboard" ? <Dashboard /> : page === "staff" ? <StaffPage manager={manager} /> : page === "schedule" ? <SchedulePage manager={manager} canApprove={user.role === "head_nurse"} /> : page === "leave" ? <LeavePage manager={manager} /> : page === "preferences" ? <MyPreferencePage user={user} /> : <SettingsPage user={user} />; return <div className="app"><aside><div className="brand"><span className="brand-mark">✚</span><div>ICU <b>Schedule</b><small>CARE WORKFORCE</small></div></div><nav><p className="nav-label">WORKSPACE</p>{(Object.keys(pageNames) as Page[]).map(item => <button key={item} className={page === item ? "active" : ""} onClick={() => setPage(item)}><span>{pageIcons[item]}</span>{pageNames[item]}</button>)}</nav><div className="account"><div className="avatar">{user.username.slice(0, 1).toUpperCase()}</div><div><strong>{user.username}</strong><small>{user.role.replace("_", " ")}</small></div><button aria-label="ออกจากระบบ" className="logout" onClick={() => { clearTokens(); setUser(null); }}>↪</button></div></aside><main className="content"><header className="topbar"><div><p>ICU / {pageNames[page]}</p><span>{new Intl.DateTimeFormat("th-TH", { dateStyle: "full" }).format(new Date())}</span></div><div className="topbar-user"><i />{isManager(user) ? "ผู้ดูแลตารางเวร" : "บุคลากร"}</div></header><section className="page-content">{content}</section></main></div>; }
+const pageGuides: Record<Page, { purpose: string; steps: string[]; note?: string }> = {
+  dashboard: {
+    purpose: "ใช้ดูสถานะสำคัญของหน่วย ICU และตรวจสอบเวรของตนเองในวันนี้อย่างรวดเร็ว",
+    steps: ["ดูจำนวนบุคลากร คำขอลาที่รออนุมัติ และเวรของวันนี้", "ตรวจสอบเวลาเวรของตนเองและรายชื่อ Senior RN ที่ครอบคลุม", "เลือกเมนูด้านซ้ายเพื่อจัดการข้อมูลส่วนอื่น"],
+  },
+  staff: {
+    purpose: "ใช้ดูรายชื่อ ตำแหน่ง สถานะ และข้อมูล Senior RN ของบุคลากรในหน่วยงาน",
+    steps: ["ตรวจสอบรายชื่อบุคลากรที่กำลังทำงาน", "ผู้ดูแลสามารถเพิ่มบุคลากร หรือนำรายชื่อออกและนำกลับเข้าระบบ", "ผู้ดูแลกำหนดสถานะ Senior RN ให้บุคลากรตำแหน่ง RN ได้"],
+    note: "การนำบุคลากรออกจะปิดบัญชีและหยุดจัดเวรในอนาคต แต่ไม่ลบประวัติเดิม",
+  },
+  schedule: {
+    purpose: "ใช้สร้าง แก้ไข ตรวจสอบ และเผยแพร่ตารางเวรรายเดือน ทั้งแบบ Manual และแบบที่ AI ช่วยจัด",
+    steps: ["เลือกแผนก ปี และเดือนที่ต้องการ", "สร้างตารางหรือ Generate AI Draft แล้วตรวจสอบผลลัพธ์", "แก้ไขช่องเวรและตรวจสอบข้อผิดพลาดตามกฎ ICU", "เมื่อข้อมูลถูกต้อง ให้หัวหน้าหออนุมัติและเผยแพร่ตาราง"],
+    note: "AI Draft เป็นเพียงตัวอย่างและยังไม่ใช่ตารางจริง จนกว่าจะนำมาใช้และเผยแพร่",
+  },
+  leave: {
+    purpose: "ใช้ส่งคำขอลา ติดตามสถานะคำขอ และให้ผู้ดูแลอนุมัติหรือปฏิเสธคำขอ",
+    steps: ["กรอกประเภทการลา วันเริ่มลา วันสิ้นสุด และเหตุผล", "กด “ส่งคำขอลา”", "ตรวจสอบสถานะในตารางด้านล่าง; ผู้ดูแลเลือกอนุมัติหรือปฏิเสธได้"],
+  },
+  preferences: {
+    purpose: "ใช้แจ้งวันที่และเวรที่ต้องการหรืออยากหลีกเลี่ยง เพื่อให้ AI นำไปประกอบการจัดตาราง",
+    steps: ["เลือกวันที่และเวร", "เลือก “ต้องการเวรนี้” หรือ “ต้องการหลีกเลี่ยง”", "กำหนดระดับความสำคัญแล้วบันทึก", "ตรวจสอบรายการด้านล่างและลบรายการที่ไม่ต้องการได้"],
+    note: "“หลีกเลี่ยง + ความสำคัญ 5” หมายถึงไม่พร้อมขึ้นทุกเวรตลอดวันนั้น",
+  },
+  settings: {
+    purpose: "ใช้กำหนดกฎความปลอดภัยของการจัดเวร ICU และค่าระบบตามสิทธิ์ของผู้ใช้งาน",
+    steps: ["เลือกแผนกที่ต้องการตั้งค่า", "ตรวจสอบและแก้ไขค่ากฎ ICU", "กดบันทึกในรายการที่แก้ไข; Admin สามารถจัดการ System Settings เพิ่มเติมได้"],
+    note: "เฉพาะ Admin และ Head Nurse เท่านั้นที่แก้ไขกฎ ICU ได้",
+  },
+};
+
+export default function App() { const [user, setUser] = useState<User | null>(null); const [page, setPage] = useState<Page>("dashboard"); const loadUser = useCallback(() => { if (!getToken()) return; api<User>("/auth/me").then(setUser).catch(() => { clearTokens(); setUser(null); }); }, []); useEffect(() => { loadUser(); }, [loadUser]); if (!user) return <LoginPage onSuccess={loadUser} />; const manager = isManager(user); const content = page === "dashboard" ? <Dashboard /> : page === "staff" ? <StaffPage manager={manager} /> : page === "schedule" ? <SchedulePage manager={manager} canApprove={user.role === "head_nurse"} /> : page === "leave" ? <LeavePage manager={manager} /> : page === "preferences" ? <MyPreferencePage user={user} /> : <SettingsPage user={user} />; const guide = pageGuides[page]; return <div className="app"><aside><div className="brand"><span className="brand-mark">✚</span><div>ICU <b>Schedule</b><small>CARE WORKFORCE</small></div></div><nav><p className="nav-label">WORKSPACE</p>{(Object.keys(pageNames) as Page[]).map(item => <button key={item} className={page === item ? "active" : ""} onClick={() => setPage(item)}><span>{pageIcons[item]}</span>{pageNames[item]}</button>)}</nav><div className="account"><div className="avatar">{user.username.slice(0, 1).toUpperCase()}</div><div><strong>{user.username}</strong><small>{user.role.replace("_", " ")}</small></div><button aria-label="ออกจากระบบ" className="logout" onClick={() => { clearTokens(); setUser(null); }}>↪</button></div></aside><main className="content"><header className="topbar"><div><p>ICU / {pageNames[page]}</p><span>{new Intl.DateTimeFormat("th-TH", { dateStyle: "full" }).format(new Date())}</span></div><div className="topbar-user"><i />{isManager(user) ? "ผู้ดูแลตารางเวร" : "บุคลากร"}</div></header><section className="page-content"><PageGuide purpose={guide.purpose} steps={guide.steps} note={guide.note} />{content}</section></main></div>; }

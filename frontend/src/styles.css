@@ -17,6 +17,20 @@
 @media (max-width: 900px) { .app { grid-template-columns: 72px minmax(0, 1fr); } aside { padding-inline: 10px; } .brand { padding-inline: 7px; } .brand > div, .nav-label, nav button:not(.active)::after, .account > div:nth-child(2) { display: none; } nav button { justify-content: center; padding-inline: 0; } nav button span { font-size: 1.1rem; } .account { justify-content: center; padding-inline: 0; } .logout { display: none; } .content { padding-inline: 24px; } }
 @media (max-width: 680px) { .app { grid-template-columns: 1fr; } aside { position: sticky; z-index: 5; height: auto; flex-direction: row; align-items: center; padding: 8px 10px; overflow: auto; } .brand { padding: 0 7px 0 0; } nav { display: flex; flex: 1; overflow: auto; } nav button { width: 43px; flex: none; } nav button.active::before { display: none; } .account { display: none; } .content { padding: 0 16px 28px; } .topbar { min-height: 62px; } .topbar-user { display: none; } .page-content { padding-top: 20px; } .dashboard-hero { align-items: flex-start; padding: 23px; } .live-indicator { display: none; } .cards { grid-template-columns: 1fr; } .form-grid { grid-template-columns: 1fr; } .toolbar select, .toolbar input { width: 100%; } }
 
+.page-guide { display: flex; align-items: flex-start; gap: 14px; margin: 0 0 22px; padding: 18px 20px; border: 1px solid #cfe0f7; border-radius: 14px; background: linear-gradient(135deg, #f5f9ff, #fbfdff); box-shadow: 0 2px 9px #183b6a08; }
+.page-guide-icon { display: grid; width: 32px; height: 32px; flex: none; place-items: center; border-radius: 10px; color: #fff; background: #2f6fda; font-weight: 800; }
+.page-guide-content { min-width: 0; }
+.page-guide p { margin: 0; }
+.page-guide-label { color: #2459a7 !important; font-size: .74rem; font-weight: 800; letter-spacing: .04em; }
+.page-guide-purpose { margin: 3px 0 10px !important; color: #263d64 !important; font-size: .9rem; line-height: 1.55; }
+.page-guide-steps { margin: 5px 0 0; padding-left: 21px; color: #506381; font-size: .84rem; line-height: 1.65; }
+.page-guide-note { margin-top: 10px !important; padding-top: 9px; border-top: 1px dashed #ccdaee; color: #6b7890 !important; font-size: .8rem; line-height: 1.5; }
+.page-guide.compact { margin: 0; padding: 14px; }
+.page-guide.compact .page-guide-icon { width: 28px; height: 28px; }
+.page-guide.compact .page-guide-purpose, .page-guide.compact .page-guide-steps, .page-guide.compact .page-guide-note { font-size: .76rem; }
+
+@media (max-width: 680px) { .page-guide { gap: 11px; padding: 15px; } .page-guide-icon { width: 29px; height: 29px; } }
+
 /* ICU Operations visual refresh */
 body { background: radial-gradient(circle at 86% 9%, #dceafe80 0, transparent 28%), linear-gradient(135deg, #f7faff, #f2f6fb 60%, #edf5ff); }
 button { background: linear-gradient(135deg, #2f6de0, #2563d9); font-weight: 700; letter-spacing: .005em; }
