@@ -8,6 +8,7 @@ import MyPreferencePage from "./components/MyPreferencePage";
 import AiDraftPreview from "./components/AiDraftPreview";
 import PageGuide from "./components/PageGuide";
 import StaffManagementPage from "./components/StaffManagementPage";
+import SystemSettingsPanel from "./components/SystemSettingsPanel";
 
 type Page = "dashboard" | "staff" | "schedule" | "leave" | "preferences" | "settings";
 type Department = { id: number; name: string; code: string };
@@ -16,7 +17,6 @@ type Shift = { id: number; code: string; name: string; is_working_shift: boolean
 type Assignment = { id: number; staff_id: number; shift_type_id: number; work_date: string; locked: boolean; schedule_id: number; generated: boolean };
 type Schedule = { id: number; department_id: number; year: number; month: number; status: string; source: "MANUAL" | "AI_GENERATED"; validation_state: string; approval_state: string; last_error_count: number; last_warning_count: number; details: Assignment[] };
 type Leave = { id: number; staff_id: number; leave_type: string; start_date: string; end_date: string; reason?: string; status: string };
-type Setting = { id: number; key: string; value: string };
 
 const pageNames: Record<Page, string> = { dashboard: "Dashboard", staff: "บุคลากร", schedule: "ตารางเวร", leave: "วันลา", preferences: "My Preference", settings: "ตั้งค่า" };
 const pageIcons: Record<Page, string> = { dashboard: "▦", staff: "♙", schedule: "▤", leave: "◷", preferences: "♡", settings: "⚙" };
@@ -77,7 +77,7 @@ function LeavePage({ manager }: { manager: boolean }) {
   return <><h1>วันลา</h1><p className="muted">กรอกช่วงวันที่ต้องการลา ระบบจะตรวจสอบวันก่อนบันทึก เพื่อป้องกันวันสิ้นสุดก่อนวันเริ่มต้น</p><form className="form-grid panel" onSubmit={submit}><label>ประเภทการลา<input name="leave_type" placeholder="เช่น ลาป่วย / ลาพักร้อน" required /></label><label>วันเริ่มลา<input name="start_date" type="date" value={startDate} onChange={event => setStartDate(event.target.value)} required /></label><label>วันสิ้นสุดลา<input name="end_date" type="date" min={startDate || undefined} value={endDate} onChange={event => setEndDate(event.target.value)} required /></label><label>เหตุผล (ไม่บังคับ)<input name="reason" placeholder="เช่น พบแพทย์" /></label><button>ส่งคำขอลา</button></form>{error && <p className="error" role="alert"><strong>ไม่สามารถส่งคำขอลา:</strong> {error}</p>}<table><thead><tr><th>ประเภท</th><th>ช่วงวัน</th><th>สถานะ</th>{manager && <th>อนุมัติ</th>}</tr></thead><tbody>{items.map(item => <tr key={item.id}><td>{item.leave_type}</td><td>{item.start_date} – {item.end_date}</td><td>{item.status}</td>{manager && <td>{item.status === "pending" && <><button className="small" onClick={async () => { await api(`/leave-requests/${item.id}`, { method: "PUT", body: JSON.stringify({ status: "approved" }) }); load(); }}>อนุมัติ</button> <button className="small secondary" onClick={async () => { await api(`/leave-requests/${item.id}`, { method: "PUT", body: JSON.stringify({ status: "rejected" }) }); load(); }}>ปฏิเสธ</button></>}</td>}</tr>)}</tbody></table></>;
 }
 
-function SettingsPage({ user }: { user: User }) { const [items, setItems] = useState<Setting[]>([]); const [error, setError] = useState(""); const load = useCallback(() => api<Setting[]>("/settings").then(setItems).catch(e => setError(messageFrom(e))), []); const manager = isManager(user); useEffect(() => { if (user.role === "admin") load(); }, [load, user.role]); if (!manager) return <><h1>ตั้งค่า</h1><p>เฉพาะ Admin และ Head Nurse เท่านั้นที่เข้าถึง ICU Rules ได้</p></>; return <><h1>ตั้งค่า</h1><IcuRulesPanel />{user.role === "admin" && <section className="panel"><h2>System Settings</h2>{error && <p className="error">{error}</p>}<table><thead><tr><th>คีย์</th><th>ค่า</th><th /></tr></thead><tbody>{items.map(i => <tr key={i.id}><td>{i.key}</td><td><input id={`setting-${i.id}`} defaultValue={i.value} /></td><td><button className="small" onClick={async () => { const value = (document.getElementById(`setting-${i.id}`) as HTMLInputElement).value; try { await api(`/settings/${i.key}`, { method: "PUT", body: JSON.stringify({ key: i.key, value }) }); load(); } catch (e) { setError(messageFrom(e)); } }}>บันทึก</button></td></tr>)}</tbody></table></section>}</>; }
+function SettingsPage({ user }: { user: User }) { const manager = isManager(user); if (!manager) return <><h1>ตั้งค่า</h1><p>เฉพาะ Admin และ Head Nurse เท่านั้นที่เข้าถึงกฎ ICU ได้</p></>; return <><h1>ตั้งค่า</h1><IcuRulesPanel />{user.role === "admin" && <SystemSettingsPanel />}</>; }
 
 const pageGuides: Record<Page, { purpose: string; steps: string[]; note?: string }> = {
   dashboard: {
