@@ -31,6 +31,27 @@
 
 @media (max-width: 680px) { .page-guide { gap: 11px; padding: 15px; } .page-guide-icon { width: 29px; height: 29px; } }
 
+/* Staff management */
+.staff-edit-panel { position: relative; overflow: hidden; border-color: #b9d4fa; background: linear-gradient(135deg, #f3f8ff, #fff); box-shadow: 0 16px 34px #1e5ba018; }
+.staff-edit-panel::before { position: absolute; inset: 0 auto 0 0; width: 5px; background: linear-gradient(#4d91ee, #245fc6); content: ""; }
+.section-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
+.section-heading h2 { margin: 3px 0; }
+.section-heading p { margin: 0; }
+.staff-edit-grid { display: grid; grid-template-columns: repeat(4, minmax(150px, 1fr)); gap: 14px; margin-top: 19px; align-items: end; }
+.staff-senior-option { display: flex; min-height: 42px; align-items: center; gap: 9px; padding: 10px 12px; border: 1px solid #d9e2f0; border-radius: 9px; background: #fff; }
+.staff-edit-actions { display: flex; grid-column: span 2; justify-content: flex-end; gap: 10px; }
+.field-help { margin: 12px 0 0; color: #718097; font-size: .79rem; }
+.staff-table-wrap { width: 100%; overflow-x: auto; }
+.staff-table { min-width: 980px; }
+.staff-table td { white-space: nowrap; }
+.staff-edit-button { background: linear-gradient(135deg, #3579dc, #245fc6); }
+.status-chip { display: inline-flex; padding: 4px 8px; border-radius: 999px; font-size: .73rem; font-weight: 750; }
+.status-chip.active { color: #14704e; background: #def7eb; }
+.status-chip.inactive { color: #8a4a19; background: #fff0db; }
+
+@media (max-width: 1100px) { .staff-edit-grid { grid-template-columns: repeat(2, minmax(160px, 1fr)); } }
+@media (max-width: 680px) { .staff-edit-grid { grid-template-columns: 1fr; } .staff-edit-actions { grid-column: auto; } .staff-edit-actions button { flex: 1; } .section-heading { align-items: center; } }
+
 /* ICU Operations visual refresh */
 body { background: radial-gradient(circle at 86% 9%, #dceafe80 0, transparent 28%), linear-gradient(135deg, #f7faff, #f2f6fb 60%, #edf5ff); }
 button { background: linear-gradient(135deg, #2f6de0, #2563d9); font-weight: 700; letter-spacing: .005em; }
