@@ -2,6 +2,7 @@ from dataclasses import asdict
 from datetime import date, datetime, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi.responses import JSONResponse
 from sqlalchemy import func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, selectinload
@@ -24,6 +25,7 @@ from app.services.ai_preview_validation import PreviewAssignmentInput, validate_
 from app.services import ai_draft_approval
 from app.services import ai_draft_conversion
 from app.services.schedule_publish_validation import conflict_snapshot, summarize_for_publish
+from app.services.database_export import export_database
 from app.scheduler.snapshot_loader import load_snapshot
 from app.scheduler.solver import CpSatSchedulerSolver
 from app.scheduler.explanation import build_schedule_explanation
@@ -31,6 +33,16 @@ from app.scheduler.explanation import build_schedule_explanation
 
 router = APIRouter(prefix="/api/v1")
 MANAGERS = ("admin", "head_nurse")
+
+
+@router.get("/admin/database-export")
+def download_database_export(db: Session = Depends(get_db), _: User = Depends(require_roles("admin"))) -> JSONResponse:
+    """Download a read-only JSON snapshot; credential hashes are never included."""
+    filename = f"ai_nurse_database_{date.today().isoformat()}.json"
+    return JSONResponse(
+        content=export_database(db),
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
 
 
 def commit_or_conflict(db: Session, message: str) -> None:

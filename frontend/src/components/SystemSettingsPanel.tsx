@@ -3,6 +3,7 @@ import { useCallback, useEffect, useState } from "react";
 import { api } from "../api";
 
 type Setting = { id: number; key: string; value: string };
+type DatabaseExport = { metadata: Record<string, unknown>; tables: Record<string, unknown> };
 type SettingMeta = { label: string; description: string; unit: string; minimum?: number };
 
 const settingDescriptions: Record<string, SettingMeta> = {
@@ -42,6 +43,7 @@ export default function SystemSettingsPanel(): JSX.Element {
   const [savingKey, setSavingKey] = useState<string | null>(null);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
+  const [exporting, setExporting] = useState(false);
 
   const load = useCallback(async () => {
     try {
@@ -71,8 +73,27 @@ export default function SystemSettingsPanel(): JSX.Element {
     finally { setSavingKey(null); }
   }
 
+  async function downloadDatabase(): Promise<void> {
+    setExporting(true); setError(""); setNotice("");
+    try {
+      const snapshot = await api<DatabaseExport>("/admin/database-export");
+      const blob = new Blob([JSON.stringify(snapshot, null, 2)], { type: "application/json;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const anchor = document.createElement("a");
+      anchor.href = url;
+      anchor.download = `ai_nurse_database_${new Date().toISOString().slice(0, 10)}.json`;
+      document.body.appendChild(anchor);
+      anchor.click();
+      anchor.remove();
+      URL.revokeObjectURL(url);
+      setNotice("สร้างไฟล์สำรองฐานข้อมูลเรียบร้อยแล้ว กรุณาตรวจสอบโฟลเดอร์ดาวน์โหลด");
+    } catch (requestError) { setError(messageFrom(requestError)); }
+    finally { setExporting(false); }
+  }
+
   return <section className="panel system-settings-panel">
     <div className="section-heading"><div><h2>การตั้งค่าระบบ</h2><p className="muted">ค่ากลางที่ระบบใช้ประกอบการตรวจสอบและจัดตารางเวร กรุณาแก้ไขเฉพาะเมื่อเข้าใจผลกระทบ</p></div><span className="admin-only-badge">สำหรับ Admin</span></div>
+    <div className="database-export-box"><div><strong>ดาวน์โหลดข้อมูลฐานข้อมูล</strong><p>ส่งออกข้อมูลทุกตารางเป็นไฟล์ JSON สำหรับตรวจสอบโครงสร้างและเส้นทางข้อมูล โดยไม่รวมรหัสผ่านหรือ Password Hash</p></div><button type="button" className="secondary" disabled={exporting} onClick={() => { void downloadDatabase(); }}>{exporting ? "กำลังสร้างไฟล์..." : "ดาวน์โหลดไฟล์ฐานข้อมูล (.json)"}</button></div>
     <div className="settings-explanation"><strong>วิธีใช้งาน</strong><ol><li>อ่านคำอธิบายของรายการที่ต้องการปรับ</li><li>กรอกค่าใหม่เป็นตัวเลขตามหน่วยที่ระบุ</li><li>กด “บันทึก” เฉพาะแถวนั้น แล้วตรวจสอบข้อความยืนยัน</li></ol></div>
     {error && <p className="error" role="alert">{error}</p>}
     {notice && <p className="notice" role="status">{notice}</p>}
