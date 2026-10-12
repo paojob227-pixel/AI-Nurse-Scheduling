@@ -1,3 +1,13 @@
+2026-10-12 — Empty Manual draft conversion fix
+
+- Approved AI drafts can fill an empty, never-published Manual draft while preserving its schedule ID.
+- Populated Manual schedules, published schedules, and previously-published empty Manual schedules remain protected.
+- Conversion changes the source to AI_GENERATED, revalidates, records the previous source/count in audit, and remains unpublished.
+- Added conversion regression tests and updated PostgreSQL integration / browser E2E coverage for the empty-draft workflow.
+- Updated frontend guidance; no schema migration required.
+
+----------------
+
 v0.10.0
 
 - Added Phase 4.1 Clinical Pilot Preparation internal read-only module with pilot readiness checklist, KPI report, and audit-evidence verification

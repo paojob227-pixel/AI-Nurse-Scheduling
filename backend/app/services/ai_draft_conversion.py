@@ -27,22 +27,28 @@ def validate_conversion_eligibility(draft: AiScheduleDraft) -> None:
 def convert_approved_draft(db: Session, draft: AiScheduleDraft, actor: User, replace_existing_ai_draft: bool = False) -> tuple[Schedule, list[schedule_validator.Conflict]]:
     """Create, or explicitly replace, an AI-sourced Manual Schedule draft and validate it again."""
     validate_conversion_eligibility(draft)
-    existing = db.scalar(select(Schedule).where(Schedule.department_id == draft.department_id, Schedule.year == draft.year, Schedule.month == draft.month))
+    existing = db.scalar(select(Schedule).where(Schedule.department_id == draft.department_id, Schedule.year == draft.year, Schedule.month == draft.month).with_for_update())
     if existing is not None:
-        if not replace_existing_ai_draft:
+        empty_manual_draft = (
+            existing.status == "draft" and existing.source == "MANUAL"
+            and not existing.details and existing.published_at is None
+        )
+        if not empty_manual_draft and not replace_existing_ai_draft:
             raise AiDraftConversionError("A Manual Schedule already exists for this department and month; AI conversion will not overwrite it")
-        if existing.status != "draft" or existing.source != "AI_GENERATED":
-            raise AiDraftConversionError("Only an existing AI-generated draft can be replaced; published and Manual schedules are protected")
+        if not empty_manual_draft and (existing.status != "draft" or existing.source != "AI_GENERATED"):
+            raise AiDraftConversionError("ไม่สามารถเขียนทับตารางที่เผยแพร่แล้ว หรือตาราง Manual ที่มีเวรอยู่แล้วได้ กรุณาเลือกเดือนอื่นหรือทบทวนตารางเดิม")
         previous_assignment_count = len(existing.details)
+        previous_source = existing.source
         for detail in list(existing.details):
             db.delete(detail)
         schedule = existing
+        schedule.source = "AI_GENERATED"
         schedule.validation_state = "pending"
         schedule.approval_state = "not_requested"
         schedule.last_error_count = 0
         schedule.last_warning_count = 0
-        audit_action = "AI_DRAFT_REPLACED"
-        audit_before = {"ai_draft_id": draft.id, "previous_assignment_count": previous_assignment_count}
+        audit_action = "AI_DRAFT_CONVERTED" if empty_manual_draft else "AI_DRAFT_REPLACED"
+        audit_before = {"ai_draft_id": draft.id, "previous_assignment_count": previous_assignment_count, "previous_source": previous_source}
         db.flush()
     else:
         schedule = Schedule(department_id=draft.department_id, year=draft.year, month=draft.month, status="draft", source="AI_GENERATED", validation_state="pending", approval_state="not_requested")

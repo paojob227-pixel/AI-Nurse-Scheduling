@@ -6,6 +6,8 @@ from datetime import date
 from urllib.parse import urlparse
 
 from fastapi.testclient import TestClient
+from alembic.config import Config
+from alembic.script import ScriptDirectory
 from sqlalchemy import create_engine, func, select, text
 from sqlalchemy.orm import Session, sessionmaker
 
@@ -44,7 +46,7 @@ class AiWorkflowPostgresIntegrationTests(unittest.TestCase):
         cls.Session = sessionmaker(bind=cls.engine, autocommit=False, autoflush=False, expire_on_commit=False)
         with cls.engine.connect() as connection:
             revision = connection.scalar(text("SELECT version_num FROM alembic_version"))
-        if revision != "20260803_06":
+        if revision != ScriptDirectory.from_config(Config("alembic.ini")).get_current_head():
             raise RuntimeError("Run `python -m alembic upgrade head` against the integration test database first")
 
         def override_get_db():
@@ -173,6 +175,8 @@ class AiWorkflowPostgresIntegrationTests(unittest.TestCase):
             db.close()
 
     def test_full_generate_validate_submit_approve_convert_validate_and_publish_workflow(self) -> None:
+        empty = self.client.post("/api/v1/schedules", headers=self.head_nurse_headers, json={"department_id": self.ids["department_id"], "year": 2026, "month": 8})
+        self.assertEqual(empty.status_code, 201, empty.text)
         preview = self._preview()
         assignments = self._draft_payload(preview, self.ids["department_id"])["assignments"]
         validation = self.client.post("/api/v1/scheduler/preview/validate", headers=self.admin_headers, json={"department_id": self.ids["department_id"], "year": 2026, "month": 8, "assignments": assignments})
@@ -197,6 +201,7 @@ class AiWorkflowPostgresIntegrationTests(unittest.TestCase):
         self.assertEqual(converted.status_code, 200, converted.text)
         self.assertEqual(converted.json()["source"], "AI_GENERATED")
         schedule_id = converted.json()["schedule_id"]
+        self.assertEqual(schedule_id, empty.json()["id"])
         conflicts = self.client.get(f"/api/v1/schedules/{schedule_id}/conflicts", headers=self.head_nurse_headers)
         self.assertEqual(conflicts.status_code, 200, conflicts.text)
         self.assertEqual(conflicts.json()["error_count"], 0)
@@ -236,12 +241,29 @@ class AiWorkflowPostgresIntegrationTests(unittest.TestCase):
         draft_id = self._create_approved_draft()
         db: Session = self.Session()
         try:
-            db.add(Schedule(department_id=self.ids["department_id"], year=2026, month=8, status="draft", source="MANUAL"))
+            manual = Schedule(department_id=self.ids["department_id"], year=2026, month=8, status="draft", source="MANUAL")
+            db.add(manual)
+            db.flush()
+            db.add(ScheduleDetail(schedule_id=manual.id, staff_id=self.ids["rn001_id"], shift_type_id=self.ids["am_shift_id"], work_date=date(2026, 8, 1), locked=False, generated=False, is_incharge=False))
             db.commit()
         finally:
             db.close()
         overwrite = self.client.post(f"/api/v1/ai-schedule-drafts/{draft_id}/convert", headers=self.head_nurse_headers)
         self.assertEqual(overwrite.status_code, 409)
+
+    def test_empty_manual_draft_accepts_ai_without_creating_second_schedule(self) -> None:
+        draft_id = self._create_approved_draft()
+        response = self.client.post("/api/v1/schedules", headers=self.head_nurse_headers, json={"department_id": self.ids["department_id"], "year": 2026, "month": 8})
+        self.assertEqual(response.status_code, 201, response.text)
+        schedule_id = response.json()["id"]
+        converted = self.client.post(f"/api/v1/ai-schedule-drafts/{draft_id}/convert-replace-draft", headers=self.head_nurse_headers)
+        self.assertEqual(converted.status_code, 200, converted.text)
+        self.assertEqual(converted.json()["schedule_id"], schedule_id)
+        self.assertFalse(converted.json()["will_publish_schedule"])
+        with self.Session() as db:
+            self.assertEqual(db.scalar(select(func.count()).select_from(Schedule)), 1)
+            self.assertEqual(db.get(Schedule, schedule_id).source, "AI_GENERATED")
+            self.assertEqual(db.scalar(select(func.count()).select_from(ScheduleDetail)), 1)
 
     def test_publish_is_blocked_when_manual_validator_has_errors(self) -> None:
         db: Session = self.Session()

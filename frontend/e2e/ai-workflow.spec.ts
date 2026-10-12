@@ -11,7 +11,7 @@ async function login(page: Page, username: string, password: string): Promise<vo
   await page.getByLabel("ชื่อผู้ใช้").fill(username);
   await page.getByLabel("รหัสผ่าน").fill(password);
   await page.getByRole("button", { name: "เข้าสู่ระบบ" }).click();
-  await expect(page.getByRole("heading", { name: "Dashboard" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "ภาพรวมการจัดเวร" })).toBeVisible();
 }
 
 async function openSchedule(page: Page): Promise<void> {
@@ -41,6 +41,10 @@ test.describe("AI workflow browser E2E", () => {
   test("head nurse can generate, validate, approve, convert, and publish an AI draft", async ({ page }) => {
     await login(page, process.env.E2E_HEAD_NURSE_USERNAME!, process.env.E2E_HEAD_NURSE_PASSWORD!);
     await openSchedule(page);
+    const create = page.getByRole("button", { name: "สร้างตารางเดือนนี้" });
+    await expect(create).toBeVisible();
+    await create.click();
+    await expect(page.locator("#schedule-editor")).toBeVisible();
     await page.getByRole("button", { name: "Generate AI Draft" }).click();
     await expect(page.getByText(/OPTIMAL|FEASIBLE/).first()).toBeVisible();
     await page.getByRole("button", { name: "Validate AI Draft" }).click();
@@ -48,9 +52,9 @@ test.describe("AI workflow browser E2E", () => {
     await page.getByRole("button", { name: "Submit for Approval" }).click();
     await expect(page.getByRole("button", { name: "Approve Draft" })).toBeVisible();
     await page.getByRole("button", { name: "Approve Draft" }).click();
-    await page.getByRole("button", { name: "Convert to Manual Schedule" }).click();
+    await page.getByRole("button", { name: "ส่ง AI Draft ลงตารางฉบับร่าง" }).click();
     await expect(page.getByText(/Manual Schedule Draft #[0-9]+ ถูกสร้างแล้ว/)).toBeVisible();
     await page.getByRole("button", { name: "ตรวจสอบและเผยแพร่ตาราง" }).click();
-    await expect(page.getByText("เผยแพร่แล้ว")).toBeVisible();
+    await expect(page.locator("#schedule-editor")).toContainText("เผยแพร่แล้ว");
   });
 });

@@ -931,7 +931,7 @@ def convert_ai_schedule_draft(draft_id: int, db: Session = Depends(get_db), curr
 
 @router.post("/ai-schedule-drafts/{draft_id}/convert-replace-draft", response_model=AiDraftConversionOut)
 def convert_replace_ai_schedule_draft(draft_id: int, db: Session = Depends(get_db), current_user: User = Depends(require_roles("head_nurse"))) -> AiDraftConversionOut:
-    """Explicitly replace only an existing AI-generated draft; published/manual schedules remain protected."""
+    """Fill an empty never-published Manual draft or replace an AI draft; protect populated Manual/published schedules."""
     try:
         schedule, conflicts = ai_draft_conversion.convert_approved_draft(
             db, get_ai_draft_or_404(db, draft_id), current_user, replace_existing_ai_draft=True,
