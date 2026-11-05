@@ -1,7 +1,7 @@
 import os
 from pathlib import Path
 
-from fastapi import FastAPI, Response, status
+from fastapi import FastAPI, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from sqlalchemy import text
@@ -51,9 +51,19 @@ def health(response: Response) -> dict[str, str]:
         with engine.connect() as connection:
             connection.execute(text("SELECT 1"))
     except Exception:
-        response.status_code = status.HTTP_503_SERVICE_UNAVAILABLE
+        # Keep liveness healthy while Postgres is restarting; /health/ready
+        # reports whether database-backed features can currently operate.
         return {"status": "degraded", "database": "unavailable"}
     return {"status": "ok", "database": "available"}
+
+
+@app.get("/health/ready")
+def readiness(response: Response) -> dict[str, str]:
+    """Strict readiness probe that requires a working database connection."""
+    result = health(response)
+    if result["status"] != "ok":
+        response.status_code = 503
+    return result
 
 
 # The production image copies the Vite build here. Mounting it last preserves
