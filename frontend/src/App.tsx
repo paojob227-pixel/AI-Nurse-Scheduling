@@ -18,7 +18,7 @@ type Assignment = { id: number; staff_id: number; shift_type_id: number; work_da
 type Schedule = { id: number; department_id: number; year: number; month: number; status: string; source: "MANUAL" | "AI_GENERATED"; validation_state: string; approval_state: string; last_error_count: number; last_warning_count: number; details: Assignment[] };
 type Leave = { id: number; staff_id: number; leave_type: string; start_date: string; end_date: string; reason?: string; status: string };
 
-const pageNames: Record<Page, string> = { dashboard: "Dashboard", staff: "บุคลากร", schedule: "ตารางเวร", leave: "วันลา", preferences: "My Preference", settings: "ตั้งค่า" };
+const pageNames: Record<Page, string> = { dashboard: "Dashboard", staff: "บุคลากร", schedule: "ตารางเวร", leave: "วันลา", preferences: "บันทึกความต้องการ", settings: "ตั้งค่า" };
 const pageIcons: Record<Page, string> = { dashboard: "▦", staff: "♙", schedule: "▤", leave: "◷", preferences: "♡", settings: "⚙" };
 const isManager = (user: User | null) => user?.role === "admin" || user?.role === "head_nurse";
 

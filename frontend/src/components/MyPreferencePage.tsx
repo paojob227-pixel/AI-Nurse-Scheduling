@@ -103,7 +103,7 @@ export default function MyPreferencePage({ user }: { user: User }): JSX.Element 
     : shifts.find(shift => shift.id === shiftTypeId)?.code ?? `Shift #${shiftTypeId}`;
 
   return <>
-    <h1>My Preference</h1>
+    <h1>บันทึกความต้องการ</h1>
     <p className="muted">บันทึกความต้องการก่อนจัดตารางเวร โดย “หลีกเลี่ยง” ความสำคัญ 5 จะเป็นวันไม่พร้อมขึ้นเวร</p>
 
     <section className="preference-guide">
@@ -137,7 +137,7 @@ export default function MyPreferencePage({ user }: { user: User }): JSX.Element 
 
     <div className="preference-grid">
       <section className="panel">
-        <h2>My Preference</h2>
+        <h2>บันทึกความต้องการ</h2>
         <p className="section-description">เลือกวันที่ ความต้องการ และระดับความสำคัญ หากเลือก <strong>หลีกเลี่ยง + ความสำคัญ 5</strong> ระบบจะบล็อกทุกเวรของวันนั้นโดยอัตโนมัติ</p>
         {canEdit && <form className="form-grid" onSubmit={submitPreference}>
           <input name="work_date" type="date" aria-label="วันที่ต้องการ" required />
