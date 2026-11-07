@@ -1022,3 +1022,49 @@ def my_shift_today(db: Session = Depends(get_db), current_user: User = Depends(g
             for staff, senior_shift in covering_seniors
         ],
     }
+
+
+@router.get("/dashboard/my-shifts")
+def my_shifts_for_month(
+    year: int | None = None,
+    month: int | None = None,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> dict[str, object]:
+    """Return only the signed-in user's shifts for the requested calendar month."""
+    today = date.today()
+    selected_year = year or today.year
+    selected_month = month or today.month
+    if not 1 <= selected_month <= 12:
+        raise HTTPException(status_code=422, detail="month must be between 1 and 12")
+    month_start = date(selected_year, selected_month, 1)
+    month_end = date(selected_year + (selected_month == 12), selected_month % 12 + 1, 1)
+    rows = db.execute(
+        select(ScheduleDetail, ShiftType, Schedule)
+        .join(Schedule, Schedule.id == ScheduleDetail.schedule_id)
+        .join(ShiftType, ShiftType.id == ScheduleDetail.shift_type_id)
+        .join(Staff, Staff.id == ScheduleDetail.staff_id)
+        .where(
+            Staff.user_id == current_user.id,
+            ScheduleDetail.work_date >= month_start,
+            ScheduleDetail.work_date < month_end,
+        )
+        .order_by(ScheduleDetail.work_date, ShiftType.code)
+    ).all()
+    return {
+        "year": selected_year,
+        "month": selected_month,
+        "assignments": [
+            {
+                "date": detail.work_date.isoformat(),
+                "shift_code": shift.code,
+                "shift_name": shift.name,
+                "start_time": shift.start_time.strftime("%H:%M") if shift.start_time else None,
+                "end_time": shift.end_time.strftime("%H:%M") if shift.end_time else None,
+                "crosses_midnight": shift.crosses_midnight,
+                "is_incharge": detail.is_incharge,
+                "schedule_status": schedule.status,
+            }
+            for detail, shift, schedule in rows
+        ],
+    }
