@@ -1,7 +1,7 @@
 """Read-only loader for a reproducible department-month scheduler input snapshot."""
 
 from calendar import monthrange
-from datetime import date
+from datetime import date, timedelta
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -44,7 +44,18 @@ def load_snapshot(db: Session, department_id: int, year: int, month: int) -> Sch
         if row.integer_value is not None
     }
     staff_ids = [item.id for item in staff_rows]
-    leaves = list(db.scalars(select(LeaveRequest).join(Staff).where(Staff.department_id == department_id).order_by(LeaveRequest.start_date, LeaveRequest.id)))
+    # Scope leave data to the selected month; unrelated historical/future
+    # leave must not block this month's solver snapshot.
+    leaves = list(db.scalars(
+        select(LeaveRequest)
+        .join(Staff)
+        .where(
+            Staff.department_id == department_id,
+            LeaveRequest.start_date <= month_end,
+            LeaveRequest.end_date >= month_start,
+        )
+        .order_by(LeaveRequest.start_date, LeaveRequest.id)
+    ))
     availability = list(db.scalars(select(Availability).where(Availability.staff_id.in_(staff_ids), Availability.date >= month_start, Availability.date <= month_end))) if staff_ids else []
     preferences = list(db.scalars(select(StaffShiftPreference).where(StaffShiftPreference.staff_id.in_(staff_ids), StaffShiftPreference.work_date >= month_start, StaffShiftPreference.work_date <= month_end))) if staff_ids else []
     schedule = db.scalar(select(Schedule).where(Schedule.department_id == department_id, Schedule.year == year, Schedule.month == month))

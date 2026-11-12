@@ -228,7 +228,9 @@ def _validate_approved_leaves(
         leave_dates = tuple(_dates_inclusive(leave.start_date, leave.end_date))
         in_snapshot_dates = tuple(work_date for work_date in leave_dates if work_date in model_dates)
         if len(in_snapshot_dates) != len(leave_dates):
-            issues.append(PreflightIssue("error", "APPROVED_LEAVE_OUTSIDE_SNAPSHOT", f"Approved leave for staff {leave.staff_id} includes date(s) outside the generation month"))
+            # Cross-month approved leave is valid; apply its overlapping dates
+            # and report the out-of-month portion as informational only.
+            issues.append(PreflightIssue("warning", "APPROVED_LEAVE_OUTSIDE_SNAPSHOT", f"Approved leave for staff {leave.staff_id} includes date(s) outside the generation month; only overlapping dates were applied"))
         for work_date in in_snapshot_dates:
             for shift_id in shift_ids:
                 key = (leave.staff_id, work_date, shift_id)
