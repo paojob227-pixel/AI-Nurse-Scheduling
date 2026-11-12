@@ -67,7 +67,8 @@ def load_snapshot(db: Session, department_id: int, year: int, month: int) -> Sch
         year=year,
         month=month,
         staff=tuple(SchedulerStaff(
-            row.id, row.employee_code, f"{row.first_name} {row.last_name}", row.position, row.is_senior_rn,
+            row.id, row.employee_code, f"{row.first_name} {row.last_name}", row.position,
+            row.is_senior_rn or (user is not None and user.role == "head_nurse"),
             user is not None and user.role == "head_nurse",
         ) for row, user in staff_user_rows),
         shifts=tuple(SchedulerShift(row.id, row.code, row.start_time, row.end_time, row.duration_minutes, row.crosses_midnight) for row in shift_rows),

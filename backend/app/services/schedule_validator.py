@@ -212,7 +212,7 @@ def validate_schedule(db: Session, schedule_id: int) -> list[Conflict]:
     if schedule is None:
         raise LookupError("Schedule not found")
     rows = db.execute(select(ScheduleDetail, Staff, ShiftType, User).join(Staff, ScheduleDetail.staff_id == Staff.id).join(ShiftType, ScheduleDetail.shift_type_id == ShiftType.id).outerjoin(User, Staff.user_id == User.id).where(ScheduleDetail.schedule_id == schedule_id)).all()
-    assignments = [Assignment(detail.id, staff.id, f"{staff.first_name} {staff.last_name}", staff.position, staff.is_senior_rn, detail.work_date, shift.id, shift.code, shift.start_time, shift.end_time, shift.crosses_midnight, detail.is_incharge, detail.incharge_exception, detail.exception_reason, detail.exception_approved_by_user_id, user is not None and user.role == "head_nurse") for detail, staff, shift, user in rows]
+    assignments = [Assignment(detail.id, staff.id, f"{staff.first_name} {staff.last_name}", staff.position, staff.is_senior_rn or (user is not None and user.role == "head_nurse"), detail.work_date, shift.id, shift.code, shift.start_time, shift.end_time, shift.crosses_midnight, detail.is_incharge, detail.incharge_exception, detail.exception_reason, detail.exception_approved_by_user_id, user is not None and user.role == "head_nurse") for detail, staff, shift, user in rows]
     window_rows = list(db.scalars(select(CoverageWindow).where(CoverageWindow.department_id == schedule.department_id)))
     linked_shifts = db.execute(select(CoverageWindowShiftType.coverage_window_id, CoverageWindowShiftType.shift_type_id)).all()
     links: dict[int, set[int]] = {}
